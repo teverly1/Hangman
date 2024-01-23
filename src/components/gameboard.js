@@ -21,11 +21,6 @@ function Gameboard(props){
         setUniqueLetters(getUniqueLetters(upperWord)); //get the unique letters in the word. It makes the comparison for a win super easy
     },[word]);
 
-    // get a new word when the app is loaded
-    useEffect(() =>{
-        getAWord();
-    },[])
-
     function getAWord(){
         setLoading(true)
         fetch(`https://random-word-api.herokuapp.com/word?length=${wordLength}&number=1`).then(
@@ -41,6 +36,11 @@ function Gameboard(props){
             }
         )
     }
+
+    // get a new word when the app is loaded
+    useEffect(() =>{
+        getAWord();
+    },[])
 
     function onLetterGuessed(syntheticEvent){
         let letter = syntheticEvent.nativeEvent.srcElement.innerText,
@@ -111,7 +111,7 @@ function Gameboard(props){
         <div className="letters">
             {buttons}
         </div>
-        {gameOver?<GameOver onNewGame={restart} onReset={reset} gameOver={gameOver} word={word}></GameOver>:null}
+        {gameOver?<GameOver onNewGame={restart} onReset={reset} gameOver={gameOver} word={word} missedCount={missedCount}></GameOver>:null}
     </div>
 }
 

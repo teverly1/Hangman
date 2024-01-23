@@ -1,4 +1,4 @@
-import './App.css';
+import './App.scss';
 import Gameboard from './components/gameboard';
 import Header from './components/header';
 
