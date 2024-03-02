@@ -100,14 +100,17 @@ function Gameboard(props){
         buttons.push(<LetterButton 
             letter={letter}
             key={x}
-            guessed={allGuesses[letter] || gameOver}
+            guessed={allGuesses[letter] || gameOver || loading}
             handler={onLetterGuessed}
         ></LetterButton>);
     }
 
     return <div className="gameboard">
-        <Word word={word} guesses={allGuesses}></Word>
-        <Misses missedCount={missedCount}></Misses>
+        {loading?<div><p className="loading-text">Loading </p><div class="lds-ellipsis"><div></div><div></div><div></div><div></div></div></div>:
+        <Word word={word} guesses={allGuesses}></Word>}
+        <div className="misses-wrapper">
+            <Misses missedCount={missedCount}></Misses>
+        </div>
         <div className="letters">
             {buttons}
         </div>
