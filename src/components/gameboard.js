@@ -33,11 +33,6 @@ function Gameboard(props){
         }
     }
 
-    // get a new word when the app is loaded
-    // useEffect(() =>{
-    //     getAWord();
-    // },[])
-
     useEffect(() =>{
         restart(); // Automatically get a new word with the new length
     },[wordLength])
