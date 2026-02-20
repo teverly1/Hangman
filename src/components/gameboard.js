@@ -2,6 +2,7 @@ import LetterButton from "./letterbutton";
 import Misses from "./misses";
 import Word from "./word";
 import GameOver from "./gameover";
+import DifficultySelector from "./difficultyselector";
 import { useState, useEffect } from "react";
 function Gameboard(props){
     const [word, setWord] = useState("eabcefg"),
@@ -14,33 +15,32 @@ function Gameboard(props){
           [gameOver, setGameOver] = useState(0),
           failedCount = 5;
 
-    // when the word changes we need to do a couple of things
-    useEffect(() => {
-        let upperWord = word.toUpperCase();
-        setWord(upperWord); //ensure that the word is uppercase, it makes comparison easier later on
-        setUniqueLetters(getUniqueLetters(upperWord)); //get the unique letters in the word. It makes the comparison for a win super easy
-    },[word]);
+    async function getAWord() {
+        setLoading(true);
+        try {
+            const response = await fetch(`https://random-word-api.herokuapp.com/word?length=${wordLength}&number=1`);
+            const data = await response.json();
 
-    function getAWord(){
-        setLoading(true)
-        fetch(`https://random-word-api.herokuapp.com/word?length=${wordLength}&number=1`).then(
-            res => {
-                res.json().then(r=>{
-                    if(Array.isArray(r))
-                    {
-                        setWord(r[0]);
-                        setLoading(false);
-                    }
-                    console.log(r);
-                })
+            if (Array.isArray(data) && data.length > 0) {
+                const newWord = data[0].toUpperCase();
+                setWord(newWord);
+                setUniqueLetters(getUniqueLetters(newWord));
             }
-        )
+        } catch (error) {
+            console.error("Fetch failed:", error);
+        } finally {
+            setLoading(false);
+        }
     }
 
     // get a new word when the app is loaded
+    // useEffect(() =>{
+    //     getAWord();
+    // },[])
+
     useEffect(() =>{
-        getAWord();
-    },[])
+        restart(); // Automatically get a new word with the new length
+    },[wordLength])
 
     function onLetterGuessed(syntheticEvent){
         let letter = syntheticEvent.nativeEvent.srcElement.innerText,
@@ -93,6 +93,11 @@ function Gameboard(props){
         return word.split('').reduce((acc,curr)=> (acc[curr]='',acc),{})
     }
 
+    const handleDifficultyChange = (newLength) => {
+        setWordLength(newLength);
+        // restart(); // Automatically get a new word with the new length
+    };
+
     let buttons = [];
     for(let x = 65; x < 91; x++) //Go from A(65)-Z(91) to create the buttons for the game
     {
@@ -106,6 +111,10 @@ function Gameboard(props){
     }
 
     return <div className="gameboard">
+        <DifficultySelector 
+            onSelect={handleDifficultyChange} 
+            currentDifficulty={wordLength} 
+        />
         {loading?<div><p className="loading-text">Loading </p><div class="lds-ellipsis"><div></div><div></div><div></div><div></div></div></div>:
         <Word word={word} guesses={allGuesses}></Word>}
         <div className="misses-wrapper">
