@@ -1,7 +1,7 @@
 function Word({word = "",guesses={}}){
     let wordSplit = word.split('');
     
-    return <div><p>Guess the word</p> 
+    return <div className="wordy"><p>Guess the word ({word.length} letters)</p> 
         <div className="word">
             {
                 wordSplit.map((letter,index) => {

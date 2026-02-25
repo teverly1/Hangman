@@ -1,13 +1,13 @@
-function Header(){
-    return <h1 className="header">
-        <span className="h">H</span>
-        <span className="a">A</span>
-        <span className="n">N</span>
-        <span className="g">G</span>
-        <span className="m">M</span>
-        <span className="a2">A</span>
-        <span className="n2">N</span>
-    </h1>
+function Header() {
+  const title = "HANGMAN";
+
+  return (
+    <header className="header-title">
+      {title.split("").map((letter, index) => (
+        <span key={index} className={letter.toLowerCase()}>{letter}</span>
+      ))}
+    </header>
+  );
 }
 
 export default Header;
