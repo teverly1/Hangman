@@ -11,9 +11,10 @@ function GameOver({ onNewGame, onReset, gameOver = 1, word = "", missedCount = 0
     const winner = gameOver === 1;
 
     useEffect(() => {
-        if (winner) startConfettiCannon(animationFrameId, 5);
+        let current = null;
+        if (winner) current = startConfettiCannon(animationFrameId, 5);
         return () => {
-            if (animationFrameId.current) cancelAnimationFrame(animationFrameId.current);
+            if (current) cancelAnimationFrame(current);
         };
     }, [winner]);
 

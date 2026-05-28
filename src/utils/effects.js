@@ -24,7 +24,9 @@ export function startConfettiCannon(frameRef,durationInSeconds = 15, colors = ['
             if (Date.now() < end) {
                 // Update the ref directly so the component always has the latest ID
                 frameRef.current = requestAnimationFrame(frame);
+                return frameRef.current;
             }
         }());
     }
+    return null;
 }
