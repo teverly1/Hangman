@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import LetterButton from "./letterbutton";
 import Misses from "./misses";
 import Word from "./word";
@@ -15,7 +15,41 @@ function Gameboard(props) {
         [correctGuesses, setCorrectGuesses] = useState({}),
         [missedCount, setMissedCount] = useState(0),
         [gameOver, setGameOver] = useState(0),
-        failedCount = 5;
+        failedCount = 5,
+        restart = useCallback(() => {
+            reset();
+            getAWord();
+        }, ""),
+        onLetterGuessed = useCallback((letter) => {
+            let newAllGuesses = { ...allGuesses },
+                newCorrectGuesses,
+                newMissedCount = 0,
+                isWinner = 0;
+
+            if (!allGuesses[letter]) {
+                //update all guesses so we know which letters have been guessed
+                newAllGuesses[letter] = true;
+                setAllGuesses(newAllGuesses);
+                if (word.includes(letter)) {
+                    //keep track of the guesses that are correct
+                    newCorrectGuesses = { ...correctGuesses };
+                    newCorrectGuesses[letter] = true;
+                    setCorrectGuesses(newCorrectGuesses);
+                    //check if we have a winning guess
+                    isWinner = Object.keys(newCorrectGuesses).length === Object.keys(uniqueLetters).length;
+                    if (isWinner) {
+                        setGameOver(1);
+                    }
+                }
+                else {
+                    newMissedCount = missedCount + 1;
+                    setMissedCount(newMissedCount);
+                    if (newMissedCount >= failedCount) {
+                        setGameOver(2);
+                    }
+                }
+            }
+        });
 
     async function getAWord() {
         setLoading(true);
@@ -60,37 +94,6 @@ function Gameboard(props) {
         };
     }, [onLetterGuessed]); // Dependency ensures the listener uses the latest handler logic
 
-    function onLetterGuessed(letter) {
-        let newAllGuesses = { ...allGuesses },
-            newCorrectGuesses,
-            newMissedCount = 0,
-            isWinner = 0;
-
-        if (!allGuesses[letter]) {
-            //update all guesses so we know which letters have been guessed
-            newAllGuesses[letter] = true;
-            setAllGuesses(newAllGuesses);
-            if (word.includes(letter)) {
-                //keep track of the guesses that are correct
-                newCorrectGuesses = { ...correctGuesses };
-                newCorrectGuesses[letter] = true;
-                setCorrectGuesses(newCorrectGuesses);
-                //check if we have a winning guess
-                isWinner = Object.keys(newCorrectGuesses).length === Object.keys(uniqueLetters).length;
-                if (isWinner) {
-                    setGameOver(1);
-                }
-            }
-            else {
-                newMissedCount = missedCount + 1;
-                setMissedCount(newMissedCount);
-                if (newMissedCount >= failedCount) {
-                    setGameOver(2);
-                }
-            }
-        }
-    }
-
     function reset() {
         setAllGuesses({});
         setCorrectGuesses({});
@@ -98,13 +101,17 @@ function Gameboard(props) {
         setGameOver(0);
     }
 
-    function restart() {
-        reset();
-        getAWord();
-    }
+    // function restart() {
+    //     reset();
+    //     getAWord();
+    // }
 
     function getUniqueLetters(word = "") {
-        return word.split('').reduce((acc, curr) => (acc[curr] = '', acc), {})
+        return word.split('').reduce((acc, curr) => {
+            // (acc[curr] = '', acc)
+            acc[curr] = (acc[curr] || 0) + 1;
+            return acc;
+        }, {})
     }
 
     function handleDifficultyChange(newLength) {
@@ -124,7 +131,7 @@ function Gameboard(props) {
         );
     });
 
-    let videoName = '',//'9666927-sd_426_240_25fps',
+    let videoName = '',
         fragment = '#t=10,20';
     if (gameOver) {
         fragment = '';
