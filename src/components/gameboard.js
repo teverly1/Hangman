@@ -7,10 +7,11 @@ import DifficultySelector from "./difficultyselector";
 import DynamicVideoLoader from './dynamicvideoloader';
 
 function Gameboard(props) {
-    const [word, setWord] = useState("eabcefg"),
+    const defaultWord = "MISSING",
+        [word, setWord] = useState(defaultWord),
         [wordLength, setWordLength] = useState(7),
         [loading, setLoading] = useState(false),
-        [uniqueLetters, setUniqueLetters] = useState(getUniqueLetters(word)),
+        [uniqueLetters, setUniqueLetters] = useState(getUniqueLetters(defaultWord)),
         [allGuesses, setAllGuesses] = useState({}),
         [correctGuesses, setCorrectGuesses] = useState({}),
         [missedCount, setMissedCount] = useState(0),
@@ -19,7 +20,7 @@ function Gameboard(props) {
         restart = useCallback(() => {
             reset();
             getAWord();
-        }, ""),
+        },[reset,getAWord]),
         onLetterGuessed = useCallback((letter) => {
             let newAllGuesses = { ...allGuesses },
                 newCorrectGuesses,
@@ -49,7 +50,7 @@ function Gameboard(props) {
                     }
                 }
             }
-        });
+        },[allGuesses,correctGuesses,missedCount]);
 
     async function getAWord() {
         setLoading(true);
@@ -80,7 +81,6 @@ function Gameboard(props) {
 
             // Check if it's a single letter between A and Z
             if (key.length === 1 && key >= 'A' && key <= 'Z') {
-                // 2. Call your existing guess handler
                 onLetterGuessed(key);
             }
         };
