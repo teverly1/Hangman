@@ -8,6 +8,7 @@ import DynamicVideoLoader from './dynamicvideoloader';
 
 // import jsonUrl from '../data/test.json?url';
 
+//placeholders for fetch handling
 let controller=null,
     response = null;
 
@@ -80,7 +81,7 @@ function Gameboard(props) {
                 }
             }
             else {
-                if(Object.keys(allGuesses).length - Object.keys(correctGuesses).length >= failedCount){
+                if(Object.keys(newAllGuesses).length - Object.keys(correctGuesses).length >= failedCount){
                     setGameOver(2);
                 }
             }
