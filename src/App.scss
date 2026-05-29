@@ -96,17 +96,6 @@
     color: $base;
   }
 
-  // button {
-  //   background-color: transparent;
-  //   color: $test-color;
-  //   border: 1px solid $test-color;
-  //   margin: 0.2rem;
-  //   cursor: pointer;
-  //   padding: 0.6vw;
-  //   font-size: xx-large;
-  //   min-width: 51px;
-  // }
-
   button:disabled {
     opacity: .5;
     cursor: not-allowed;
@@ -315,10 +304,7 @@
       }
 
       .help-icon {
-        width: 18px;
-        height: 18px;
-        margin-left: 10px;
-        vertical-align: middle;
+        margin-left: .2rem;
         opacity: 0.5;
         transition: all 0.3s ease;
       }

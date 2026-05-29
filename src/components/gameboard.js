@@ -6,73 +6,94 @@ import GameOver from "./gameover";
 import DifficultySelector from "./difficultyselector";
 import DynamicVideoLoader from './dynamicvideoloader';
 
+// import jsonUrl from '../data/test.json?url';
+
+let controller=null,
+    response = null;
+
+function getUniqueLetters(word = "") {
+    return word.split('').reduce((acc, curr) => {
+        acc[curr] = (acc[curr] || 0) + 1;
+        return acc;
+    }, {})
+}
+
+async function getAWord(wordLength, loadingFn) {
+    if(controller)
+    {
+        controller.abort('Request Canceled');
+        await Promise.allSettled([response]);
+    }
+    if (typeof loadingFn === 'function') {
+        loadingFn(true);
+    }
+    try {
+        controller = new AbortController();
+        response = await fetch(`https://random-word-api.herokuapp.com/word?length=${wordLength}&number=1`,{signal:controller.signal});
+        const data = await response.json();
+        // const response = await fetch(`${jsonUrl}?length=${wordLength}&number=1`);
+        // const data = ["pending"]
+
+        if (Array.isArray(data) && data.length > 0) {
+            const newWord = data[0].toUpperCase();
+            return { word: newWord, uniqueLetters: getUniqueLetters(newWord) };
+        }
+    } catch (error) {
+        console.error("Fetch failed:", error);
+    } finally {
+        if (typeof loadingFn === 'function') {
+            loadingFn(false);
+        }
+    }
+}
+
 function Gameboard(props) {
     const defaultWord = "MISSING",
         [word, setWord] = useState(defaultWord),
-        [wordLength, setWordLength] = useState(7),
+        [wordLength, setWordLength] = useState(defaultWord.length),
         [loading, setLoading] = useState(false),
         [uniqueLetters, setUniqueLetters] = useState(getUniqueLetters(defaultWord)),
         [allGuesses, setAllGuesses] = useState({}),
         [correctGuesses, setCorrectGuesses] = useState({}),
-        [missedCount, setMissedCount] = useState(0),
         [gameOver, setGameOver] = useState(0),
-        failedCount = 5,
-        restart = useCallback(() => {
-            reset();
-            getAWord();
-        },[reset,getAWord]),
-        onLetterGuessed = useCallback((letter) => {
-            let newAllGuesses = { ...allGuesses },
-                newCorrectGuesses,
-                newMissedCount = 0,
-                isWinner = 0;
+        failedCount = 5;
 
-            if (!allGuesses[letter]) {
-                //update all guesses so we know which letters have been guessed
-                newAllGuesses[letter] = true;
-                setAllGuesses(newAllGuesses);
-                if (word.includes(letter)) {
-                    //keep track of the guesses that are correct
-                    newCorrectGuesses = { ...correctGuesses };
-                    newCorrectGuesses[letter] = true;
-                    setCorrectGuesses(newCorrectGuesses);
-                    //check if we have a winning guess
-                    isWinner = Object.keys(newCorrectGuesses).length === Object.keys(uniqueLetters).length;
-                    if (isWinner) {
-                        setGameOver(1);
-                    }
-                }
-                else {
-                    newMissedCount = missedCount + 1;
-                    setMissedCount(newMissedCount);
-                    if (newMissedCount >= failedCount) {
-                        setGameOver(2);
-                    }
+    const onLetterGuessed = useCallback((letter) => {
+        let newAllGuesses = { ...allGuesses },
+            newCorrectGuesses,
+            isWinner = 0;
+
+        if (loading) { return; }
+        if (!allGuesses[letter]) {
+            //update all guesses so we know which letters have been guessed
+            newAllGuesses[letter] = true;
+            setAllGuesses(newAllGuesses);
+            if (word.includes(letter)) {
+                //keep track of the guesses that are correct
+                newCorrectGuesses = { ...correctGuesses };
+                newCorrectGuesses[letter] = true;
+                setCorrectGuesses(newCorrectGuesses);
+                //check if we have a winning guess
+                isWinner = Object.keys(newCorrectGuesses).length === Object.keys(uniqueLetters).length;
+                if (isWinner) {
+                    setGameOver(1);
                 }
             }
-        },[allGuesses,correctGuesses,missedCount]);
-
-    async function getAWord() {
-        setLoading(true);
-        try {
-            const response = await fetch(`https://random-word-api.herokuapp.com/word?length=${wordLength}&number=1`);
-            const data = await response.json();
-
-            if (Array.isArray(data) && data.length > 0) {
-                const newWord = data[0].toUpperCase();
-                setWord(newWord);
-                setUniqueLetters(getUniqueLetters(newWord));
+            else {
+                if(Object.keys(allGuesses).length - Object.keys(correctGuesses).length >= failedCount){
+                    setGameOver(2);
+                }
             }
-        } catch (error) {
-            console.error("Fetch failed:", error);
-        } finally {
-            setLoading(false);
         }
-    }
+    }, [allGuesses, correctGuesses, uniqueLetters, word, loading]);
 
     useEffect(() => {
-        restart(); // Automatically get a new word with the new length
-    }, [wordLength])
+        getAWord(defaultWord.length, setLoading).then(o => {
+            if (!o) return;
+            setWord(o.word);
+            setUniqueLetters(o.uniqueLetters);
+        })
+    }, []);
 
     useEffect(() => {
         const handlePhysicalKeyDown = (event) => {
@@ -97,25 +118,22 @@ function Gameboard(props) {
     function reset() {
         setAllGuesses({});
         setCorrectGuesses({});
-        setMissedCount(0);
         setGameOver(0);
     }
 
-    // function restart() {
-    //     reset();
-    //     getAWord();
-    // }
-
-    function getUniqueLetters(word = "") {
-        return word.split('').reduce((acc, curr) => {
-            // (acc[curr] = '', acc)
-            acc[curr] = (acc[curr] || 0) + 1;
-            return acc;
-        }, {})
+    function restart(newLength) {
+        reset();
+        let length = typeof newLength ==='number'?newLength:wordLength;
+        getAWord(length, setLoading).then(o => {
+            if (!o) return;
+            setWord(o.word);
+            setUniqueLetters(o.uniqueLetters);
+        })
     }
 
     function handleDifficultyChange(newLength) {
         setWordLength(newLength);
+        restart(newLength);
     }
 
     // Generate buttons A-Z
@@ -138,6 +156,7 @@ function Gameboard(props) {
         videoName = gameOver === 2 ? '2657691-sd_426_240_30fps' : '365-136081982_tiny';
     }
 
+    const missedCount = Object.keys(allGuesses).length - Object.keys(correctGuesses).length;
     return <div className="gameboard">
         {videoName === '' ? <></> : <DynamicVideoLoader videoName={videoName} fragment={fragment} ></DynamicVideoLoader>}
         <DifficultySelector
